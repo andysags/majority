@@ -1,0 +1,484 @@
+<title>Majorité</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow column, like a daily ticket. The two choices are the hero; everything else is a receipt underneath. */
+:root{
+  --bg:#EAF0EF; --surface:#FFFFFF; --ink:#0F201E; --muted:#56706C; --line:#CFDBD9;
+  --a:#0F766E; --on-a:#FFFFFF; --a-soft:#D3ECE9;
+  --b:#F2B705; --on-b:#1C1600; --b-soft:#FCEFC4;
+  --good:#1F8A4C; --bad:#C2410C;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0B1413; --surface:#13201E; --ink:#E5EEEC; --muted:#8FA4A0; --line:#22322F;
+  --a:#2DB3A6; --on-a:#04201D; --a-soft:#163D39;
+  --b:#F5C431; --on-b:#1C1600; --b-soft:#3D3313;
+  --good:#4ADE80; --bad:#FB923C; color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0B1413; --surface:#13201E; --ink:#E5EEEC; --muted:#8FA4A0; --line:#22322F;
+  --a:#2DB3A6; --on-a:#04201D; --a-soft:#163D39;
+  --b:#F5C431; --on-b:#1C1600; --b-soft:#3D3313;
+  --good:#4ADE80; --bad:#FB923C; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.mark{font-family:var(--display);font-weight:800;font-size:clamp(28px,8vw,40px);letter-spacing:-.02em;line-height:1}
+.mark span{color:var(--a)}
+.meta{font-family:var(--mono);font-size:13px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.meta b{color:var(--ink);font-weight:700}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.question{font-family:var(--display);font-weight:600;font-size:clamp(20px,5.4vw,26px);line-height:1.25;margin:8px 0 6px;text-wrap:balance}
+.rule{color:var(--muted);font-size:15px;margin:0}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.choice{appearance:none;border:2px solid transparent;border-radius:12px;padding:18px 14px 16px;min-height:132px;cursor:pointer;
+  display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;gap:12px;text-align:left;
+  font-family:var(--body);font-size:17px;font-weight:600;line-height:1.3;transition:transform .12s ease,opacity .2s ease}
+.choice .tag{font-family:var(--display);font-weight:800;font-size:28px;line-height:1}
+.choice.a{background:var(--a);color:var(--on-a)}
+.choice.b{background:var(--b);color:var(--on-b)}
+.choice:hover:not(:disabled){transform:translateY(-2px)}
+.choice:active:not(:disabled){transform:translateY(0) scale(.98)}
+.choice:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+.choice:disabled{cursor:default}
+.choice.dim{opacity:.28}
+.choice.picked{border-color:var(--ink)}
+.choice .lock{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.after{display:flex;flex-direction:column;gap:12px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--line)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.count{font-family:var(--mono);font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.count b{color:var(--ink)}
+.btn{appearance:none;border:1.5px solid var(--ink);background:transparent;color:var(--ink);border-radius:999px;
+  padding:9px 16px;font:600 15px var(--body);cursor:pointer}
+.btn:hover{background:var(--ink);color:var(--surface)}
+.btn:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+.note{font-size:14px;color:var(--muted);margin:0}
+.note.warn{color:var(--bad)}
+.verdict h3{font-family:var(--display);font-weight:600;font-size:17px;line-height:1.3;margin:6px 0 12px;text-wrap:balance}
+.bar{display:flex;height:44px;border-radius:10px;overflow:hidden;font-family:var(--mono);font-weight:700;font-size:14px}
+.bar div{display:flex;align-items:center;padding:0 12px;white-space:nowrap;min-width:0;overflow:hidden}
+.bar .ba{background:var(--a);color:var(--on-a)}
+.bar .bb{background:var(--b);color:var(--on-b);justify-content:flex-end}
+.legend{display:flex;justify-content:space-between;gap:12px;font-size:14px;margin-top:8px;color:var(--muted)}
+.legend span{min-width:0}
+.outcome{margin-top:12px;font-weight:700}
+.outcome.good{color:var(--good)} .outcome.bad{color:var(--bad)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat .v{font-family:var(--display);font-weight:800;font-size:26px;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .l{font-size:13px;color:var(--muted);margin-top:4px}
+.strip{display:flex;gap:6px;margin-top:4px}
+.strip i{width:22px;height:22px;border-radius:6px;background:var(--line);display:block}
+.strip i.ok{background:var(--good)} .strip i.ko{background:var(--bad)} .strip i.wait{background:transparent;border:2px dashed var(--muted)}
+ol.board{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column}
+ol.board li{display:grid;grid-template-columns:28px 1fr auto auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+ol.board li:first-child{border-top:0}
+ol.board .rk{font-family:var(--mono);color:var(--muted)}
+ol.board .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+ol.board .sc{font-family:var(--mono);font-weight:700}
+ol.board .st{font-family:var(--mono);color:var(--muted);font-size:13px}
+ol.board li.me{background:var(--a-soft);margin:0 -10px;padding-inline:10px;border-radius:8px}
+.sponsor{border:1.5px dashed var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:4px}
+.sponsor strong{font-size:15px}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+input[type=text]{font:500 16px var(--body);padding:10px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:100%}
+input[type=text]:focus-visible{outline:3px solid var(--a);outline-offset:1px;border-color:transparent}
+textarea.copy{width:100%;min-height:120px;font:13px var(--mono);border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px}
+.toast{font-size:14px;font-weight:600;color:var(--good)}
+.how{font-size:14px;color:var(--muted);margin:0;padding-left:18px}
+.how li{margin:2px 0}
+@media (max-width:380px){.stats{grid-template-columns:1fr 1fr}.stat:last-child{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="mark">Majori<span>té</span></div>
+    <div class="meta">Question <b id="dayNum">#1</b><br>Verdict dans <b id="countdown">--:--:--</b></div>
+  </header>
+
+  <section class="card" aria-labelledby="qText">
+    <div class="eyebrow" id="qLabel">Question du jour</div>
+    <h1 class="question" id="qText">…</h1>
+    <p class="rule">Ne dis pas ce que <em>tu</em> préfères. Parie sur ce que <strong>la majorité</strong> va choisir.</p>
+    <div class="choices">
+      <button class="choice a" id="btnA" type="button"><span class="tag">A</span><span id="optA">…</span></button>
+      <button class="choice b" id="btnB" type="button"><span class="tag">B</span><span id="optB">…</span></button>
+    </div>
+    <div class="after" id="after">
+      <div class="row">
+        <span class="count" id="countToday"></span>
+        <button class="btn" id="shareBtn" type="button" hidden>Partager mon pari</button>
+      </div>
+      <p class="note" id="statusNote"></p>
+      <span class="toast" id="toast" hidden></span>
+      <textarea class="copy" id="copyBox" readonly hidden aria-label="Texte à partager"></textarea>
+    </div>
+  </section>
+
+  <section class="card verdict" aria-labelledby="vTitle">
+    <div class="eyebrow" id="vTitle">Verdict d'hier</div>
+    <div id="verdictBody"></div>
+  </section>
+
+  <section aria-label="Tes stats">
+    <div class="stats">
+      <div class="stat"><div class="v" id="sScore">0</div><div class="l">points</div></div>
+      <div class="stat"><div class="v" id="sStreak">0</div><div class="l">série en cours</div></div>
+      <div class="stat"><div class="v" id="sAcc">–</div><div class="l">bons paris</div></div>
+    </div>
+    <div class="card" style="margin-top:10px">
+      <div class="eyebrow">Tes 7 derniers jours</div>
+      <div class="strip" id="strip" aria-label="Historique des 7 derniers jours"></div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="bTitle">
+    <div class="eyebrow" id="bTitle">Classement</div>
+    <div id="boardBody"></div>
+  </section>
+
+  <aside class="sponsor">
+    <span class="eyebrow">Espace annonceur</span>
+    <strong>Cette question peut porter le nom de ta marque.</strong>
+    <span class="note">Une question sponsorisée par jour, vue par tous les joueurs, avec les résultats du vote en bonus.</span>
+  </aside>
+
+  <section class="card">
+    <label class="f" for="pseudo">Ton pseudo dans le classement
+      <input type="text" id="pseudo" maxlength="20" autocomplete="nickname" placeholder="Ex. Le Prophète">
+    </label>
+    <p class="note" style="margin-top:8px">Enregistré quand tu paries ou quand tu quittes le champ.</p>
+  </section>
+
+  <section class="card">
+    <div class="eyebrow">Règles</div>
+    <ul class="how">
+      <li>Une question par jour, nouvelle à minuit (heure de Cotonou).</li>
+      <li>Tu as un seul pari, et il est définitif.</li>
+      <li>Si ton camp est majoritaire : +1 point. Égalité parfaite : personne ne marque.</li>
+      <li>Les votes restent cachés jusqu'au verdict, pour que personne ne copie.</li>
+    </ul>
+  </section>
+</div>
+
+<script>
+const LAUNCH = "2026-10-29";
+const Q = [
+  ["Riz au gras","Attiéké poisson"],
+  ["Être riche mais seul","Être fauché mais entouré"],
+  ["Rester vivre au pays","Partir vivre à l'étranger"],
+  ["Plage le dimanche","Grasse matinée le dimanche"],
+  ["Mariage en grand","Mariage discret, voyage à la place"],
+  ["Lire les messages tout de suite","Laisser en « vu » jusqu'au soir"],
+  ["Appel vocal","Note vocale"],
+  ["Zem","Taxi"],
+  ["Savoir lire les pensées","Pouvoir devenir invisible"],
+  ["Football","Basket"],
+  ["Patron de sa boîte","Salarié bien payé"],
+  ["Coupé-décalé","Afrobeats"],
+  ["Ne plus jamais avoir de réseau","Ne plus jamais avoir de courant"],
+  ["Thé","Café"],
+  ["Connaître la date de sa mort","Connaître la cause de sa mort"],
+  ["Garder un secret","Le dire à son meilleur ami"],
+  ["Ville animée","Village tranquille"],
+  ["Payer en Mobile Money","Payer en espèces"],
+  ["Gagner 10 millions maintenant","Gagner 1 million par an toute sa vie"],
+  ["Pagne","Jean"],
+  ["Être célèbre","Être respecté sans être connu"],
+  ["Dire la vérité qui blesse","Mentir pour protéger"],
+  ["Matin","Nuit"],
+  ["Chats","Chiens"],
+  ["Apprendre à coder","Apprendre une langue"],
+  ["Remonter dans le passé","Voyager dans le futur"],
+  ["Partir en vacances seul","Partir en vacances en groupe"],
+  ["Sucré","Salé"],
+  ["iPhone","Android"],
+  ["Cinéma","Série à la maison"],
+  ["Pâte rouge","Pâte noire"],
+  ["Avoir toujours raison","Être toujours drôle"],
+  ["Pluie","Soleil"],
+  ["Mariage à 25 ans","Mariage à 35 ans"],
+  ["Parler toutes les langues","Jouer de tous les instruments"],
+  ["Cuisine de maman","Restaurant chic"],
+  ["Économiser","Profiter maintenant"],
+  ["Livre","Podcast"],
+  ["Boss exigeant mais juste","Boss sympa mais désorganisé"],
+  ["Ne plus jamais manger de piment","Ne plus jamais manger de sucre"],
+  ["Ami qui dit tout","Ami qui ne dit rien"],
+  ["WhatsApp","TikTok"],
+  ["Gagner le match","Marquer le plus beau but et perdre"],
+  ["Vivre 200 ans","Revivre sa vie avec ses souvenirs"],
+  ["Bissap","Gingembre"]
+];
+
+const $ = s => document.querySelector(s);
+const keyAt = (off = 0) => new Date(Date.now() + 36e5 + off * 864e5).toISOString().slice(0, 10);
+const dayNum = k => Math.round((Date.parse(k) - Date.parse(LAUNCH)) / 864e5) + 1;
+const qFor = k => { const n = dayNum(k) - 1; return Q[((n % Q.length) + Q.length) % Q.length]; };
+
+function hash(str){let h=2166136261;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+const S = { mode:"loading", db:null, uid:null, canWrite:true, players:{}, local:{pseudo:"",h:{}}, saving:false, today:keyAt(0), err:"" };
+
+function loadLocal(){ try{ const v = JSON.parse(localStorage.getItem("majorite.local")||"null"); if(v && v.h) S.local = v; }catch(e){} }
+function saveLocal(){ try{ localStorage.setItem("majorite.local", JSON.stringify(S.local)); }catch(e){} }
+
+function me(){
+  if (S.mode === "live") return S.players[S.uid] || { pseudo:"", h:{} };
+  return S.local;
+}
+
+function sim(k){
+  const r = rng(hash("maj"+k)); const n = 600 + Math.floor(r()*2400); const p = .22 + r()*.56;
+  const a = Math.round(n*p); return { a, b:n-a, n };
+}
+
+let tallyCache = {};
+function tally(k){
+  if (tallyCache[k]) return tallyCache[k];
+  let t;
+  if (S.mode === "live"){
+    t = { a:0, b:0, n:0 };
+    for (const id in S.players){ const v = (S.players[id].h||{})[k]; if (v==="A"){t.a++;t.n++} else if (v==="B"){t.b++;t.n++} }
+  } else {
+    t = sim(k);
+    if (k === S.today){ // en démo, la journée se remplit au fil des heures
+      const frac = ((Date.now()+36e5) % 864e5) / 864e5; const n = Math.max(1, Math.round(t.n*frac));
+      t = { a:0, b:0, n };
+    }
+  }
+  return tallyCache[k] = t;
+}
+function result(k){ const t = tally(k); if (!t.n) return null; return { ...t, maj: t.a>t.b ? "A" : t.b>t.a ? "B" : "=" }; }
+
+function statsFor(h){
+  h = h || {};
+  let score=0, played=0, correct=0, streak=0;
+  for (const k in h){
+    if (k >= S.today) continue;
+    const r = result(k); if (!r || r.maj === "=") continue;
+    played++; if (h[k] === r.maj){ score++; correct++; }
+  }
+  for (let d=-1; d>-400; d--){
+    const k = keyAt(d); if (k < LAUNCH && !h[k]) break;
+    if (!h[k]) break;
+    const r = result(k); if (!r) break; if (r.maj === "=") continue;
+    if (h[k] === r.maj) streak++; else break;
+  }
+  return { score, played, correct, streak };
+}
+
+function fmtPct(x){ return Math.round(x*100) + " %"; }
+
+function render(){
+  tallyCache = {};
+  S.today = keyAt(0);
+  const k = S.today, q = qFor(k), mine = me(), pick = (mine.h||{})[k];
+  $("#dayNum").textContent = "#" + dayNum(k);
+  $("#qLabel").textContent = S.mode === "demo" ? "Question du jour · mode démo" : "Question du jour";
+  $("#qText").textContent = q[0] + " ou " + q[1] + " ?";
+  $("#optA").textContent = q[0]; $("#optB").textContent = q[1];
+
+  const ready = S.mode !== "loading" && (S.mode === "demo" || S.canWrite);
+  for (const side of ["A","B"]){
+    const b = $("#btn"+side);
+    b.disabled = !!pick || !ready || S.saving;
+    b.classList.toggle("picked", pick === side);
+    b.classList.toggle("dim", !!pick && pick !== side);
+    b.setAttribute("aria-pressed", pick === side ? "true" : "false");
+    let lock = b.querySelector(".lock");
+    if (pick === side){ if(!lock){ lock=document.createElement("span"); lock.className="lock"; b.appendChild(lock);} lock.textContent = "Ton pari · verrouillé"; }
+    else if (lock) lock.remove();
+  }
+
+  const t = tally(k);
+  const cnt = $("#countToday");
+  if (S.mode === "loading") cnt.textContent = "Connexion…";
+  else cnt.innerHTML = "<b>" + t.n.toLocaleString("fr-FR") + "</b> " + (t.n > 1 ? "joueurs ont" : "joueur a") + " parié aujourd'hui";
+  $("#shareBtn").hidden = !pick;
+
+  const note = $("#statusNote");
+  note.classList.remove("warn");
+  if (S.err){ note.textContent = S.err; note.classList.add("warn"); }
+  else if (S.mode === "demo") note.textContent = "Mode démo : la foule est simulée et ton historique reste sur cet appareil. Le vrai jeu multijoueur s'active quand la page est ouverte sur claude.ai.";
+  else if (S.mode === "live" && !S.canWrite) { note.textContent = "Tu peux regarder, mais ton accès ne permet pas de parier. Demande un accès Contributeur à la personne qui t'a partagé le jeu."; note.classList.add("warn"); }
+  else if (pick) note.textContent = "Résultat à minuit. Les votes restent cachés jusque-là.";
+  else note.textContent = "Un seul pari par jour. Choisis bien.";
+
+  renderVerdict();
+  renderStats();
+  renderBoard();
+  const ps = $("#pseudo"); if (document.activeElement !== ps && mine.pseudo) ps.value = mine.pseudo;
+}
+
+function renderVerdict(){
+  const k = keyAt(-1), q = qFor(k), r = result(k), box = $("#verdictBody");
+  box.innerHTML = "";
+  const h3 = document.createElement("h3"); h3.textContent = q[0] + " ou " + q[1] + " ?"; box.appendChild(h3);
+  if (!r){
+    const p = document.createElement("p"); p.className = "note";
+    p.textContent = k < LAUNCH ? "Le jeu commence aujourd'hui. Premier verdict demain à minuit." : "Personne n'a parié hier. Le prochain verdict tombe à minuit.";
+    box.appendChild(p); return;
+  }
+  const pa = r.a / r.n, pb = 1 - pa;
+  const bar = document.createElement("div"); bar.className = "bar";
+  bar.innerHTML = '<div class="ba"></div><div class="bb"></div>';
+  bar.children[0].style.width = (pa*100)+"%"; bar.children[0].textContent = pa >= .12 ? "A " + fmtPct(pa) : "";
+  bar.children[1].style.width = (pb*100)+"%"; bar.children[1].textContent = pb >= .12 ? fmtPct(pb) + " B" : "";
+  bar.setAttribute("role","img"); bar.setAttribute("aria-label", q[0]+" "+fmtPct(pa)+", "+q[1]+" "+fmtPct(pb));
+  box.appendChild(bar);
+  const lg = document.createElement("div"); lg.className = "legend";
+  const la = document.createElement("span"); la.textContent = q[0];
+  const lb = document.createElement("span"); lb.textContent = q[1]; lb.style.textAlign = "right";
+  lg.append(la, lb); box.appendChild(lg);
+  const tot = document.createElement("p"); tot.className = "note"; tot.style.marginTop = "6px";
+  tot.textContent = r.n.toLocaleString("fr-FR") + " paris au total";
+  box.appendChild(tot);
+  const myPick = (me().h||{})[k];
+  const out = document.createElement("div"); out.className = "outcome";
+  if (r.maj === "=") out.textContent = "Égalité parfaite. Personne ne marque.";
+  else if (!myPick) { out.textContent = "Tu n'as pas parié hier."; out.style.color = "var(--muted)"; }
+  else if (myPick === r.maj) { out.textContent = "Bien vu : +1 point."; out.classList.add("good"); }
+  else { out.textContent = "Raté. La majorité a choisi « " + (r.maj === "A" ? q[0] : q[1]) + " »."; out.classList.add("bad"); }
+  box.appendChild(out);
+}
+
+function dayMarks(h){
+  const out = [];
+  for (let d=-7; d<=0; d++){
+    const k = keyAt(d);
+    if (d === 0){ if (h[k]) out.push("wait"); continue; }
+    if (!h[k]) { out.push("none"); continue; }
+    const r = result(k);
+    out.push(!r || r.maj === "=" ? "none" : h[k] === r.maj ? "ok" : "ko");
+  }
+  return out;
+}
+
+function renderStats(){
+  const h = me().h || {}, s = statsFor(h);
+  $("#sScore").textContent = s.score;
+  $("#sStreak").textContent = s.streak;
+  $("#sAcc").textContent = s.played ? Math.round(100*s.correct/s.played) + " %" : "–";
+  const strip = $("#strip"); strip.innerHTML = "";
+  for (const m of dayMarks(h)){ const i = document.createElement("i"); if (m !== "none") i.className = m; strip.appendChild(i); }
+}
+
+function renderBoard(){
+  const box = $("#boardBody"); box.innerHTML = "";
+  if (S.mode !== "live"){
+    const p = document.createElement("p"); p.className = "note"; p.style.marginTop = "8px";
+    p.textContent = S.mode === "loading" ? "Chargement…" : "Le classement s'affiche quand plusieurs joueurs partagent la même partie.";
+    box.appendChild(p); return;
+  }
+  const rows = Object.entries(S.players).map(([id, v]) => ({ id, name: (v.pseudo||"").trim() || "Joueur anonyme", ...statsFor(v.h) }))
+    .filter(r => r.played > 0 || r.id === S.uid)
+    .sort((x, y) => y.score - x.score || y.streak - x.streak || x.name.localeCompare(y.name));
+  if (!rows.length){
+    const p = document.createElement("p"); p.className = "note"; p.style.marginTop = "8px";
+    p.textContent = "Personne n'a encore de point. Le premier verdict lancera le classement."; box.appendChild(p); return;
+  }
+  const ol = document.createElement("ol"); ol.className = "board";
+  const top = rows.slice(0, 10); const myIdx = rows.findIndex(r => r.id === S.uid);
+  if (myIdx >= 10) top.push(rows[myIdx]);
+  top.forEach(r => {
+    const li = document.createElement("li"); if (r.id === S.uid) li.className = "me";
+    const rk = document.createElement("span"); rk.className = "rk"; rk.textContent = (rows.indexOf(r) + 1);
+    const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = r.name + (r.id === S.uid ? " (toi)" : "");
+    const st = document.createElement("span"); st.className = "st"; st.textContent = r.streak ? "série " + r.streak : "";
+    const sc = document.createElement("span"); sc.className = "sc"; sc.textContent = r.score + " pt" + (r.score > 1 ? "s" : "");
+    li.append(rk, nm, st, sc); ol.appendChild(li);
+  });
+  box.appendChild(ol);
+}
+
+function shareText(){
+  const k = S.today, q = qFor(k), h = me().h || {}, s = statsFor(h);
+  const sq = dayMarks(h).map(m => m === "ok" ? "🟩" : m === "ko" ? "🟥" : m === "wait" ? "⏳" : "⬜").join("");
+  return "MAJORITÉ #" + dayNum(k) + "\n" + q[0] + " ou " + q[1] + " ?\nMon pari est fait. Et toi, tu sais ce que les gens pensent ?\n" + sq + "\nSérie : " + s.streak + " · " + s.score + " pts";
+}
+
+async function vote(side){
+  const k = S.today, cur = me();
+  if ((cur.h||{})[k] || S.saving) return;
+  const pseudo = $("#pseudo").value.trim().slice(0, 20) || cur.pseudo || "";
+  if (S.mode === "demo"){ S.local = { pseudo, h: { ...S.local.h, [k]: side } }; saveLocal(); render(); return; }
+  if (S.mode !== "live" || !S.canWrite) return;
+  const prev = S.players[S.uid];
+  const body = { pseudo, h: { ...(cur.h||{}), [k]: side }, last: k };
+  S.players = { ...S.players, [S.uid]: body }; S.saving = true; S.err = ""; render();
+  try { await S.db.doc("players/" + S.uid).set(body); }
+  catch(e){
+    const np = { ...S.players }; if (prev) np[S.uid] = prev; else delete np[S.uid]; S.players = np;
+    if (e && e.code === "invalid_argument") { S.canWrite = false; }
+    else S.err = e && e.code === "quota_exceeded" ? "La partie est pleine pour le moment. Réessaie plus tard." : "Ton pari n'a pas été enregistré (connexion). Réessaie.";
+  }
+  S.saving = false; render();
+}
+
+async function savePseudo(){
+  const v = $("#pseudo").value.trim().slice(0, 20), cur = me();
+  if (v === (cur.pseudo||"")) return;
+  if (S.mode === "demo"){ S.local = { ...S.local, pseudo: v }; saveLocal(); return; }
+  if (S.mode !== "live" || !S.canWrite || S.saving) return;
+  const body = { pseudo: v, h: cur.h || {}, last: cur.last || "" };
+  S.players = { ...S.players, [S.uid]: body }; S.saving = true;
+  try { await S.db.doc("players/" + S.uid).set(body); } catch(e){ S.err = "Pseudo non enregistré. Réessaie."; }
+  S.saving = false; render();
+}
+
+$("#btnA").addEventListener("click", () => vote("A"));
+$("#btnB").addEventListener("click", () => vote("B"));
+$("#pseudo").addEventListener("change", savePseudo);
+$("#shareBtn").addEventListener("click", () => {
+  const txt = shareText(), box = $("#copyBox"), toast = $("#toast");
+  const fallback = () => { box.hidden = false; box.value = txt; box.focus(); box.select(); toast.hidden = false; toast.textContent = "Copie le texte ci-dessous et colle-le en statut."; };
+  try {
+    navigator.clipboard.writeText(txt).then(() => { box.hidden = true; toast.hidden = false; toast.textContent = "Copié. Colle-le dans ton statut WhatsApp."; setTimeout(() => toast.hidden = true, 3500); }, fallback);
+  } catch(e){ fallback(); }
+});
+
+function tick(){
+  const now = Date.now(), next = (Math.floor((now + 36e5) / 864e5) + 1) * 864e5 - 36e5;
+  let s = Math.max(0, Math.floor((next - now) / 1000));
+  const p = n => String(n).padStart(2, "0");
+  $("#countdown").textContent = p(Math.floor(s/3600)) + ":" + p(Math.floor(s%3600/60)) + ":" + p(s%60);
+  if (keyAt(0) !== S.today) render();
+}
+setInterval(tick, 1000); tick();
+render();
+
+(async () => {
+  let db = null, user = null;
+  try {
+    if (window.claude && window.claude.use) [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+  } catch(e){}
+  if (db && user){
+    const id = await user.id();
+    if (id){
+      S.db = db; S.uid = id;
+      const cw = await user.can("data.write"); S.canWrite = cw !== false;
+      try { const v = await user.me(); if (v && v.name && !$("#pseudo").value) $("#pseudo").value = v.name.split(" ")[0].slice(0, 20); } catch(e){}
+      S.mode = "live"; render();
+      db.collection("players").limit(1000).onSnapshot(snap => {
+        const m = {}; snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); });
+        if (S.saving && S.players[S.uid] && !m[S.uid]) m[S.uid] = S.players[S.uid];
+        S.players = m; render();
+      }, e => { S.err = "Connexion à la partie perdue. Recharge la page."; render(); });
+      return;
+    }
+  }
+  S.mode = "demo"; loadLocal(); render();
+})();
+</script>
