@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { saveQuestion } from "@/app/admin/actions";
-import { requireAdmin } from "@/lib/admin-auth";
+import { AdminSignIn } from "@/app/admin/sign-in";
+import { adminGate } from "@/lib/admin-auth";
 import { requestNow } from "@/lib/clock";
 import { env } from "@/lib/env";
 import { addDays, dayKeyAt, dayNumber, formatDayLong, formatDayShort } from "@/lib/game/day";
@@ -29,7 +30,19 @@ export default function AdminPage({ searchParams }: PageProps<"/admin">) {
 
 async function Admin({ searchParams }: { searchParams: PageProps<"/admin">["searchParams"] }) {
   const now = await requestNow();
-  const { email } = await requireAdmin();
+  const gate = await adminGate();
+  if (gate.state === "sign_in") {
+    return (
+      <div className="wrap">
+        <header>
+          <Link className="mark" href="/">Majori<span>té</span></Link>
+          <div className="meta">Admin</div>
+        </header>
+        <AdminSignIn turnstileSiteKey={env.turnstileSiteKey()} />
+      </div>
+    );
+  }
+  const { email } = gate;
   const sp = await searchParams;
   const today = dayKeyAt(now);
   const launch = env.launchDate();

@@ -3,19 +3,31 @@ import { notFound } from "next/navigation";
 import { env } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
 
+export type AdminGate = { state: "admin"; email: string } | { state: "sign_in" };
+
 /**
- * Server-side gate for /admin: a confirmed, non-anonymous account whose
- * e-mail is listed in ADMIN_EMAILS. Anyone else gets a 404, so the page's
- * existence is not revealed. getUser() asks Supabase Auth, so a revoked
- * account is refused immediately.
+ * Server-side gate for /admin. A confirmed, non-anonymous account whose
+ * e-mail is in ADMIN_EMAILS gets in. A visitor without a permanent account
+ * gets the sign-in form. Any other signed-in account gets a 404. getUser()
+ * asks Supabase Auth, so a revoked account is refused immediately.
  */
-export async function requireAdmin(): Promise<{ email: string }> {
+export async function adminGate(): Promise<AdminGate> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) notFound();
-  const u = data.user;
+  const u = error ? null : data.user;
+  if (!u || u.is_anonymous) return { state: "sign_in" };
   const email = u.email?.toLowerCase();
-  if (u.is_anonymous || !email || !u.email_confirmed_at) notFound();
-  if (!env.adminEmails().includes(email)) notFound();
-  return { email };
+  if (!email || !u.email_confirmed_at || !isAdminEmail(email)) notFound();
+  return { state: "admin", email };
+}
+
+/** For server actions: anything but an admin is a 404. */
+export async function requireAdmin(): Promise<{ email: string }> {
+  const gate = await adminGate();
+  if (gate.state !== "admin") notFound();
+  return { email: gate.email };
+}
+
+export function isAdminEmail(email: string): boolean {
+  return env.adminEmails().includes(email.trim().toLowerCase());
 }

@@ -29,6 +29,8 @@ export async function GET(request: NextRequest) {
     home.searchParams.set("auth", error.code === "identity_already_exists" ? "identity_taken" : "unexpected");
     return NextResponse.redirect(home);
   }
-  home.searchParams.set("auth", url.searchParams.get("from") === "link" ? "saved" : "signed_in");
+  const from = url.searchParams.get("from");
+  if (from === "admin") return NextResponse.redirect(new URL("/admin", url.origin));
+  home.searchParams.set("auth", from === "link" ? "saved" : "signed_in");
   return NextResponse.redirect(home);
 }
