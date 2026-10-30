@@ -1,4 +1,67 @@
-<h2>Connexion à Majorité</h2>
-<p>Clique sur le lien pour te connecter et retrouver tes points :</p>
-<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Me connecter</a></p>
-<p>Si tu n'as rien demandé, ignore cet e-mail.</p>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<title>Connexion à Majorité</title>
+</head>
+<body style="margin:0;padding:0;background:#EAF0EF;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#EAF0EF;">Ton lien pour te connecter et retrouver tes points.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EAF0EF;">
+  <tr>
+    <td align="center" style="padding:32px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:480px;">
+        <tr>
+          <td style="padding:0 4px 18px 4px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-weight:900;font-size:30px;letter-spacing:-0.5px;line-height:1;color:#0F201E;">
+            Majori<span style="color:#0F766E;">té</span>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#FFFFFF;border:1px solid #CFDBD9;border-radius:14px;overflow:hidden;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="50%" height="8" style="background:#0F766E;font-size:0;line-height:0;">&nbsp;</td>
+                <td width="50%" height="8" style="background:#F2B705;font-size:0;line-height:0;">&nbsp;</td>
+              </tr>
+            </table>
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="padding:28px 28px 8px 28px;font-family:Arial,Helvetica,sans-serif;">
+                  <h1 style="margin:0 0 12px 0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-weight:900;font-size:22px;line-height:1.25;color:#0F201E;">Connexion à Majorité</h1>
+                  <p style="margin:0 0 24px 0;font-size:16px;line-height:1.5;color:#0F201E;">Clique sur le bouton pour te connecter et retrouver tes points, ta série et ta place au classement.</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:0 28px;">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td align="center" bgcolor="#0F766E" style="border-radius:999px;">
+                        <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email" target="_blank" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:#FFFFFF;text-decoration:none;border-radius:999px;">Me connecter</a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 28px 28px 28px;font-family:Arial,Helvetica,sans-serif;">
+                  <p style="margin:0 0 12px 0;font-size:14px;line-height:1.5;color:#56706C;">Ce lien ne sert qu'une seule fois et expire dans une heure.</p>
+                  <p style="margin:0;font-size:12px;line-height:1.5;color:#56706C;">Le bouton ne marche pas ? Copie ce lien dans ton navigateur :<br><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email" style="color:#0F766E;word-break:break-all;">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email</a></p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:18px 4px 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#56706C;">
+            Majorité · Une question par jour. Ne dis pas ce que tu préfères, parie sur ce que la majorité va choisir.<br>
+            Si tu n'as rien demandé, ignore cet e-mail : rien ne changera sur ton compte.
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>
