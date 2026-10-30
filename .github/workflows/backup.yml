@@ -1,0 +1,49 @@
+# Weekly database backup (the Supabase free plan has none).
+# Needs the repository secret SUPABASE_DB_URL: Supabase → Connect → "Session pooler"
+# connection string, with the database password filled in.
+# Dumps are kept 90 days as workflow artifacts (Actions → Backup → a run → Artifacts).
+name: Backup
+
+on:
+  schedule:
+    - cron: "41 2 * * 1" # Mondays 02:41 UTC (03:41 in Cotonou), after the night verdict
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check secret
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::error::Repository secret SUPABASE_DB_URL is not set (see .github/workflows/backup.yml)."
+            exit 1
+          fi
+      - name: Install PostgreSQL 17 client
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -q && sudo apt-get install -yq postgresql-client-17
+      - name: Dump
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          stamp=$(date -u +%Y-%m-%d)
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" \
+            --format=custom --no-owner --no-privileges \
+            --schema=public --schema=auth --schema=private \
+            --file="majorite-$stamp.dump"
+          ls -l "majorite-$stamp.dump"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: majorite-db-${{ github.run_id }}
+          path: majorite-*.dump
+          retention-days: 90
+          if-no-files-found: error
