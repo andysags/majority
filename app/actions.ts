@@ -153,6 +153,14 @@ export async function signInWithGoogle(): Promise<Result<{ url: string }>> {
   return { ok: true, data: { url: data.url } };
 }
 
+/** Sign out on this device only. Offered to linked accounts: an anonymous account would be lost. */
+export async function signOut(): Promise<Result<null>> {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signOut({ scope: "local" });
+  if (error) return fromAuthError("signOut", error);
+  return { ok: true, data: null };
+}
+
 /** "J'ai déjà un compte": magic link, only for accounts that already exist. */
 export async function signInWithEmail(email: string, captchaToken: string | null): Promise<Result<null>> {
   const e = email.trim().toLowerCase();

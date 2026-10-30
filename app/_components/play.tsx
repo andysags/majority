@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useTransition, type ReactNode } from "reac
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  castVote, linkEmail, linkGoogle, savePseudo, signInAnonymously, signInWithEmail, signInWithGoogle, type Result,
+  castVote, linkEmail, linkGoogle, savePseudo, signInAnonymously, signInWithEmail, signInWithGoogle, signOut, type Result,
 } from "@/app/actions";
 import type { Question } from "@/lib/data";
 import { formatCountdown } from "@/lib/game/day";
@@ -375,6 +375,24 @@ function SaveProgress({ me, turnstileSiteKey }: { me: Me; turnstileSiteKey: stri
         <p className="note" style={{ marginTop: 8 }}>
           Ton compte est lié{me.email ? <> à <strong>{me.email}</strong></> : null}. Connecte-toi avec sur un autre appareil pour retrouver tes points.
         </p>
+        <div className="inline" style={{ marginTop: 12 }}>
+          <button className="btn" type="button" disabled={busy} onClick={() => {
+            setState(null);
+            startTransition(async () => {
+              try {
+                const r = await signOut();
+                // Full reload on purpose: the page then starts a fresh anonymous session.
+                // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+                if (r.ok) window.location.assign("/");
+                else setState({ t: msg(r.error), warn: true });
+              } catch (e) {
+                console.error(e);
+                setState({ t: msg("unexpected"), warn: true });
+              }
+            });
+          }}>Se déconnecter</button>
+        </div>
+        {state ? <p className="note warn" role="status" style={{ marginTop: 8 }}>{state.t}</p> : null}
       </section>
     );
   }

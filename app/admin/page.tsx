@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { saveQuestion } from "@/app/admin/actions";
 import { AdminSignIn } from "@/app/admin/sign-in";
+import { adminSignOut } from "@/app/admin/sign-in-actions";
 import { adminGate } from "@/lib/admin-auth";
 import { requestNow } from "@/lib/clock";
 import { env } from "@/lib/env";
@@ -74,7 +75,12 @@ async function Admin({ searchParams }: { searchParams: PageProps<"/admin">["sear
     <div className="wrap wide">
       <header>
         <Link className="mark" href="/">Majori<span>té</span></Link>
-        <div className="meta">Admin<br /><b>{email}</b></div>
+        <div className="meta">
+          Admin<br /><b>{email}</b>
+          <form action={adminSignOut} style={{ marginTop: 6 }}>
+            <button className="linkish" type="submit" style={{ fontSize: 13 }}>Se déconnecter</button>
+          </form>
+        </div>
       </header>
 
       {error ? <p className="note warn" role="alert">{error}</p> : null}

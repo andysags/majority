@@ -1,5 +1,6 @@
 "use server";
 
+import { redirect } from "next/navigation";
 import { env } from "@/lib/env";
 import { isAdminEmail } from "@/lib/admin-auth";
 import { createClient, createSignInClient } from "@/lib/supabase/server";
@@ -45,4 +46,15 @@ export async function adminSignInWithEmail(email: string, captchaToken: string |
     return { ok: false, message: "Envoi impossible pour le moment." };
   }
   return { ok: true };
+}
+
+/** Sign out of the admin session on this device, back to the game. */
+export async function adminSignOut() {
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signOut({ scope: "local" });
+  if (error) {
+    console.error("adminSignOut:", { code: error.code, message: error.message });
+    throw new Error(`Déconnexion impossible : ${error.message}`);
+  }
+  redirect("/");
 }
